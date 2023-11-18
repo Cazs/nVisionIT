@@ -26,13 +26,17 @@ namespace nVisionLife
 
     public partial class MainWindow : Window
     {
-        // TODO: CMD inputs or Form Control inputs?
-        static int gridW = 120;
-        static int gridH = 75;
-        const int REFRESH_RATE = 2;
-        const int ODDS_OF_BIRTH = 120;
+        // TODO: CMD inputs or Form Control inputs for constant and static vars
+        static int WORLD_GRID_WIDTH = 130;
+        static int WORLD_GRID_HEIGHT = 60;
+
+        const int WORLD_REFRESH_RATE = 3;
+        const int CELL_ODDS_OF_LIFE = 130;
+        const int CELL_SIZE = 10;
+        const int CELL_SPACING = 2;
+
+        Cell[,] cells = new Cell[WORLD_GRID_WIDTH, WORLD_GRID_HEIGHT];
         bool run = false;
-        Cell[,] cells = new Cell[gridW, gridH];
 
         public MainWindow()
         {
@@ -47,26 +51,26 @@ namespace nVisionLife
 
             this.lifeCanvas.Background = Brushes.Blue;
 
-            Canvas.SetTop(this.lifeCanvas, 50);
-            Canvas.SetLeft(this.lifeCanvas, 50);
+            Canvas.SetTop(this.lifeCanvas, 10);
+            Canvas.SetLeft(this.lifeCanvas, 10);
 
-            this.StartGameLoopAsync();
+            _ = this.StartGameLoopAsync();
         }
 
         private async Task StartGameLoopAsync()
         {
-            int gridElemCount = gridH * gridW;
+            int gridElemCount = WORLD_GRID_HEIGHT * WORLD_GRID_WIDTH;
 
             // Initialise cell/population grid
-            for (int y = 0; y < gridH; y++)
+            for (int y = 0; y < WORLD_GRID_HEIGHT; y++)
             {
-                for (int x = 0; x < gridW; x++)
+                for (int x = 0; x < WORLD_GRID_WIDTH; x++)
                 {
                     // Get a random number from 1 till width multiplied by height
                     int randomNumber = getRandomNumber(1, gridElemCount);
                     int odds = Math.DivRem(gridElemCount, randomNumber).Remainder; // TODO: Odds of life formula
 
-                    cells[x, y] = new Cell(new System.Drawing.Point(x, y), odds <= ODDS_OF_BIRTH ? true : false);
+                    cells[x, y] = new Cell(new System.Drawing.Point(x, y), odds <= CELL_ODDS_OF_LIFE ? true : false);
                 }
             }
 
@@ -74,8 +78,8 @@ namespace nVisionLife
             while (true)
             {
                 await DrawRectanglesAsync(this.lifeCanvas);
-                await Task.Delay(REFRESH_RATE);
-                Thread.Sleep(REFRESH_RATE);
+                await Task.Delay(WORLD_REFRESH_RATE);
+                // Thread.Sleep(WORLD_REFRESH_RATE);
             }
         }
 
@@ -84,12 +88,9 @@ namespace nVisionLife
             // Clear canvas for the next generation of cells
             cgolCanvas.Children.Clear();
 
-            var size = 10;
-            var space = 2;
-
-            for (int j = 0; j < gridH; j++)
+            for (int j = 0; j < WORLD_GRID_HEIGHT; j++)
             {
-                for (int i = 0; i < gridW; i++)
+                for (int i = 0; i < WORLD_GRID_WIDTH; i++)
                 {
                     if (cells[i, j].Alive)
                     {
@@ -97,22 +98,22 @@ namespace nVisionLife
 
                         System.Windows.Shapes.Rectangle rectangle = new System.Windows.Shapes.Rectangle
                         {
-                            Height = size,
-                            Width = size,
+                            Height = CELL_SIZE,
+                            Width = CELL_SIZE,
                         };
 
                         rectangle.Stroke = new SolidColorBrush(Colors.White);
                         rectangle.Fill = new SolidColorBrush(Colors.Black);
                         cgolCanvas.Children.Add(rectangle);
 
-                        Canvas.SetLeft(rectangle, i * (size + space));
-                        Canvas.SetTop(rectangle, j * (size + space));
+                        Canvas.SetLeft(rectangle, i * (CELL_SIZE + CELL_SPACING));
+                        Canvas.SetTop(rectangle, j * (CELL_SIZE + CELL_SPACING));
 
                         // Check if cell has 2 or 3 neighbours
                         int liveNeighboursCount = getLiveNeighbours(cells[i, j]).Length;
                         cells[i, j].Alive = (liveNeighboursCount >= 2 && liveNeighboursCount <= 3);
 
-                        await Task.Delay(REFRESH_RATE);
+                        await Task.Delay(WORLD_REFRESH_RATE);
                     } else
                     {
                         // Dead cell, check if has 3 live neighbours
@@ -128,13 +129,13 @@ namespace nVisionLife
             Cell[] neighbouringCells = {
                 cell.Position.X - 1 >= 0 ? cells[cell.Position.X - 1, cell.Position.Y] : new Cell(new System.Drawing.Point(0, 0), false),
                 cell.Position.X - 1 >= 0 && cell.Position.Y - 1 >= 0 ? cells[cell.Position.X - 1, cell.Position.Y - 1] : new Cell(new System.Drawing.Point(0, 0), false),
-                cell.Position.X - 1 >= 0 && cell.Position.Y + 1 < gridH ? cells[cell.Position.X - 1, cell.Position.Y + 1] : new Cell(new System.Drawing.Point(0, 0), false),
+                cell.Position.X - 1 >= 0 && cell.Position.Y + 1 < WORLD_GRID_HEIGHT ? cells[cell.Position.X - 1, cell.Position.Y + 1] : new Cell(new System.Drawing.Point(0, 0), false),
                 cell.Position.Y - 1 >= 0 ? cells[cell.Position.X, cell.Position.Y - 1] : new Cell(new System.Drawing.Point(0, 0), false),
                 //
-                cell.Position.X + 1 < gridW ? cells[cell.Position.X + 1, cell.Position.Y] : new Cell(new System.Drawing.Point(0, 0), false),
-                cell.Position.X + 1 < gridW && cell.Position.Y + 1 < gridH ? cells[cell.Position.X + 1, cell.Position.Y + 1] : new Cell(new System.Drawing.Point(0, 0), false),
-                cell.Position.X + 1 < gridW && cell.Position.Y - 1 >= 0 ? cells[cell.Position.X + 1, cell.Position.Y - 1] : new Cell(new System.Drawing.Point(0, 0), false),
-                cell.Position.Y + 1 < gridH ? cells[cell.Position.X, cell.Position.Y + 1] : new Cell(new System.Drawing.Point(0, 0), false),
+                cell.Position.X + 1 < WORLD_GRID_WIDTH ? cells[cell.Position.X + 1, cell.Position.Y] : new Cell(new System.Drawing.Point(0, 0), false),
+                cell.Position.X + 1 < WORLD_GRID_WIDTH && cell.Position.Y + 1 < WORLD_GRID_HEIGHT ? cells[cell.Position.X + 1, cell.Position.Y + 1] : new Cell(new System.Drawing.Point(0, 0), false),
+                cell.Position.X + 1 < WORLD_GRID_WIDTH && cell.Position.Y - 1 >= 0 ? cells[cell.Position.X + 1, cell.Position.Y - 1] : new Cell(new System.Drawing.Point(0, 0), false),
+                cell.Position.Y + 1 < WORLD_GRID_HEIGHT ? cells[cell.Position.X, cell.Position.Y + 1] : new Cell(new System.Drawing.Point(0, 0), false),
             };
 
             return neighbouringCells.Where(x => x.Alive).ToArray();
